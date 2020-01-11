@@ -1,11 +1,18 @@
 import sys
 import pandas as pd
 
+global excelF 
+excelF = ""
+global draw
+draw = False
 def main():
 
-	inputValid()
+	inputFlags()
 
-	filePath = sys.argv[1].split("/")
+	if (inputValid() == -1):
+		return 0
+
+	filePath = excelF.split("/")
 
 	fileName = filePath[len(filePath) - 1]
 
@@ -17,9 +24,9 @@ def main():
 
 	fileName = fileName.strip(".xlsx")
 
-	print("File to read: " + sys.argv[1])
+	print("File to read: " + excelF)
 
-	xls = pd.ExcelFile(sys.argv[1])
+	xls = pd.ExcelFile(excelF)
 
 	sheetNames = xls.sheet_names
 	
@@ -27,13 +34,36 @@ def main():
 		print("There are more than 2 sheets, only reading 2 sheets for now.")
 		return
 
-	df = goThroughList(xls, sheetNames)
+	df = goThroughList(xls, sheetNames, draw)
 
 	writeToExcel(df, sheetNames, path, fileName)
 
 	return 0
 
+def inputFlags():
+	for i in range(len(sys.argv)):
+		if '-Draw' == sys.argv[i]:
+			global draw 
+			draw = True
+		if sys.argv[i].endswith(".xlsx"):
+			global excelF 
+			excelF = sys.argv[i]
+
+def inputValid():
+	if len(sys.argv) <= 1:
+		print("Ma you need a file name to run this code.\n")
+		return -1
+	elif (len(sys.argv) > 3):
+		print("Too many arguments you just need the file name and the code name or one possible flag\n")
+		return -1
+	if (not excelF.endswith(".xlsx")):
+		print("The second file needs to be an excel file that ends in .xlsx .\n")
+		return -1
+
 def writeToExcel(df, sheetNames, path, fileName):
+	
+	print("Writing to: ", path+fileName+'_Match_Not.xlsx')
+
 	writer = pd.ExcelWriter(path+fileName+'_Match_Not.xlsx', engine='xlsxwriter')
 
 	for name in sheetNames:
@@ -41,7 +71,7 @@ def writeToExcel(df, sheetNames, path, fileName):
 
 	writer.save()
 
-def goThroughList(xls, sheetNames):
+def goThroughList(xls, sheetNames, draw):
 
 	df = {}
 
@@ -65,12 +95,18 @@ def goThroughList(xls, sheetNames):
 			searchList = grabList(df[bank].iloc[i]["Date"], df[QB])
 
 		if ( df[bank].iloc[i]["Payment"] != None ):
-			number = searchAmount(searchList, df[bank].iloc[i]["Payment"], df[QB])
-			if (number != -1):
-				df[QB].iloc[number,df[QB].columns.get_loc("Match")] = "Match"
-				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
+			if not draw:	
+				number = searchAmount(searchList, df[bank].iloc[i]["Payment"], df[QB])
+			else:
+				number = searchAmountWithDescription(searchList, df[bank].iloc[i]["Payment"], df[bank].iloc[i]["Description"], df[QB])
+				if (number != -1):
+					df[QB].iloc[number,df[QB].columns.get_loc("Match")] = "Match"
+					df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
 		if (df[bank].iloc[i]["Deposit"] != None):
-			number = searchDeposit(searchList, df[bank].iloc[i]["Deposit"], df[QB])
+			if not draw:
+				number = searchDeposit(searchList, df[bank].iloc[i]["Deposit"], df[QB])
+			else:
+				number = searchDepositWithDescription(searchList, df[bank].iloc[i]["Deposit"], df[bank].iloc[i]["Description"], df[QB])
 			if (number != -1):
 				df[QB].iloc[number, df[QB].columns.get_loc("Match")] = "Match"
 				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
@@ -80,23 +116,37 @@ def goThroughList(xls, sheetNames):
 
 	return df
 
-def inputValid():
-	if len(sys.argv) <= 1:
-		print("Ma you need a file name to run this code.\n")
-		return 
-	elif (len(sys.argv) > 2):
-		print("Too many arguments you just need the file name and the code name\n")
-		return
-
-	if (not sys.argv[1].endswith(".xlsx")):
-		print("The second file needs to be an excel file that ends in .xlsx .\n")
-		return
+def searchAmountWithDescription(searchList, payment, description, monthArray):
+	descriptionSplit = description.split(" ")
+	digits = descriptionSplit[len(descriptionSplit) - 2]
+	if (digits[len(digits) - 4:] == 9680) or (digits[len(digits) - 4:] == 9568) or (digits[len(digits) - 4:] == 4581) or (digits[len(digits) - 4:] == 7039):
+		for number in searchList:
+			if (monthArray.iloc[number]["Payment"] == payment and monthArray.iloc[number]["Match"] != "Match"):
+				if (monthArray.iloc[number]["Account"] == "Draw - TJ"):
+					return number
+				else:
+					return -1
+	else:
+		return searchAmount(searchList, payment, monthArray)
 
 def searchAmount(searchList, payment, monthArray):
 	for number in searchList:
 		if (monthArray.iloc[number]["Payment"] == payment and monthArray.iloc[number]["Match"] != "Match"):
 			return number
 	return -1
+
+def searchDepositWithDescription(searchList, deposit, description, monthArray):
+	descriptionSplit = description.split(" ")
+	digits = descriptionSplit[len(descriptionSplit) - 2]
+	if (digits[len(digits) - 4:] == 9680) or (digits[len(digits) - 4:] == 9568) or (digits[len(digits) - 4:] == 4581) or (digits[len(digits) - 4:] == 7039):
+		for number in searchList:
+			if (monthArray.iloc[number]["Deposit"] == deposit and monthArray.iloc[number]["Match"] != "Match"):
+				if (monthArray.iloc[number]["Account"] == "Draw - TJ"):
+					return number
+				else:
+					return -1
+	else:
+		return searchDeposit(searchList, deposit, monthArray)
 
 def searchDeposit(searchList, deposit, monthArray):
 	for number in searchList:
