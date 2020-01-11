@@ -10,6 +10,8 @@ Please install the latest version of python. As so you will have the latest vers
 
 pip install XlsxWriter
 
+pip install xlrd
+
 pip install openpyxl
 
 Also very useful:
