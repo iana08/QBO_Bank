@@ -6,6 +6,8 @@ IN ORDER TO RUN PLEASE DOWNLOAD IF YOU HAVE NOT AL READY:
 
 Both are in order to read and write to an excel worksheet:
 
+Please install the latest version of python. As so you will have the latest version of pip.
+
 pip install XlsxWriter
 
 pip install openpyxl
