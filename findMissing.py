@@ -172,7 +172,7 @@ def grabList(date, monthArray):
 		day = int(date.day)
 		month = int(date.month)
 
-	lDay = day - 2
+	lDay = day - 4
 	lMonth = month
 	if (lDay <= 0):
 		if (month == 3):
@@ -183,7 +183,7 @@ def grabList(date, monthArray):
 			lDay = 31 + (day - 2)
 		lMonth = month - 1
 
-	uDay = day + 2
+	uDay = day + 4
 	uMonth = month
 	if(uDay > 28 and month == 2):
 		uDay = uDay - 28
