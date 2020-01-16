@@ -36,7 +36,7 @@ def main():
 
 	df = goThroughList(xls, sheetNames, draw)
 
-	writeToExcel(df, sheetNames, path, fileName)
+	writeToExcel(df, sheetNames, path, fileName, draw)
 
 	return 0
 
@@ -60,11 +60,14 @@ def inputValid():
 		print("The second file needs to be an excel file that ends in .xlsx .\n")
 		return -1
 
-def writeToExcel(df, sheetNames, path, fileName):
-	
-	print("Writing to: ", path+fileName+'_Match_Not.xlsx')
+def writeToExcel(df, sheetNames, path, fileName, draw):
 
-	writer = pd.ExcelWriter(path+fileName+'_Match_Not.xlsx', engine='xlsxwriter')
+	if draw:
+		print("Writing to: ", path+fileName+'_Match_Not_Draw.xlsx')
+		writer = pd.ExcelWriter(path+fileName+'_Match_Not_Draw.xlsx', engine='xlsxwriter')
+	else:
+		print("Writing to: ", path+fileName+'_Match_Not.xlsx')
+		writer = pd.ExcelWriter(path+fileName+'_Match_Not.xlsx', engine='xlsxwriter')
 
 	for name in sheetNames:
 		df[name].to_excel(writer, sheet_name=name)
@@ -92,6 +95,7 @@ def goThroughList(xls, sheetNames, draw):
 
 	for i in range(len(df[bank])):
 		if (df[bank].iloc[i]["Date"] != prev_date):
+			# print(df[bank].iloc[i]["Date"])
 			searchList = grabList(df[bank].iloc[i]["Date"], df[QB])
 
 		if ( df[bank].iloc[i]["Payment"] != None ):
@@ -99,17 +103,24 @@ def goThroughList(xls, sheetNames, draw):
 				number = searchAmount(searchList, df[bank].iloc[i]["Payment"], df[QB])
 			else:
 				number = searchAmountWithDescription(searchList, df[bank].iloc[i]["Payment"], df[bank].iloc[i]["Description"], df[QB])
-				if (number != -1):
-					df[QB].iloc[number,df[QB].columns.get_loc("Match")] = "Match"
-					df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
+
+			if (number != -1):
+				df[QB].iloc[number,df[QB].columns.get_loc("Match")] = "Match"
+				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
+			# else:
+			# 	print("Not Found Payment: ", i ,df[bank].iloc[i]["Payment"])
+
 		if (df[bank].iloc[i]["Deposit"] != None):
 			if not draw:
 				number = searchDeposit(searchList, df[bank].iloc[i]["Deposit"], df[QB])
 			else:
 				number = searchDepositWithDescription(searchList, df[bank].iloc[i]["Deposit"], df[bank].iloc[i]["Description"], df[QB])
+				
 			if (number != -1):
 				df[QB].iloc[number, df[QB].columns.get_loc("Match")] = "Match"
 				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
+			# else:
+			# 		print("Not Found Deposit: ", i ,df[bank].iloc[i]["Deposit"])
 
 
 	print("Done Now Writing Back to The File")
@@ -124,8 +135,7 @@ def searchAmountWithDescription(searchList, payment, description, monthArray):
 			if (monthArray.iloc[number]["Payment"] == payment and monthArray.iloc[number]["Match"] != "Match"):
 				if (monthArray.iloc[number]["Account"] == "Draw - TJ"):
 					return number
-				else:
-					return -1
+		return -1
 	else:
 		return searchAmount(searchList, payment, monthArray)
 
@@ -143,8 +153,7 @@ def searchDepositWithDescription(searchList, deposit, description, monthArray):
 			if (monthArray.iloc[number]["Deposit"] == deposit and monthArray.iloc[number]["Match"] != "Match"):
 				if (monthArray.iloc[number]["Account"] == "Draw - TJ"):
 					return number
-				else:
-					return -1
+		return -1
 	else:
 		return searchDeposit(searchList, deposit, monthArray)
 
@@ -154,7 +163,8 @@ def searchDeposit(searchList, deposit, monthArray):
 			return number
 	return -1
 
-# Returns a list that is from the monthArray of the date +/- 2 days from the date 
+# Returns a list that is from the monthArray of the date +/- 4 days from the date 
+# Will assume that the monthArray is sortted now.
 def grabList(date, monthArray):
 
 	array = []
@@ -208,7 +218,8 @@ def grabList(date, monthArray):
 			secondMonth = int(secondDate.month)
 
 		if ( ( ( ( secondDay > uDay) and ( secondMonth < uMonth) ) or ( (secondDay <= uDay) and (secondMonth <= uMonth) ) ) and ( ((secondDay >= lDay) and (secondMonth >= lMonth )) or ((lDay > secondDay) and (secondMonth > lMonth)) ) ) :
-			array.append(i)
+			if monthArray.iloc[i]["Match"] != "Match":
+				array.append(i)
 
 	return array
 
