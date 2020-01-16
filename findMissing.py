@@ -1,10 +1,14 @@
 import sys
 import pandas as pd
 
+# Global variable to store the path to the file
 global excelF 
 excelF = ""
+
+# If the draw flag is passed
 global draw
 draw = False
+
 def main():
 
 	inputFlags()
@@ -40,6 +44,7 @@ def main():
 
 	return 0
 
+# Sees if the draw flag is passed and grabs the file path for the excel file
 def inputFlags():
 	for i in range(len(sys.argv)):
 		if '-Draw' == sys.argv[i]:
@@ -49,6 +54,7 @@ def inputFlags():
 			global excelF 
 			excelF = sys.argv[i]
 
+# Checks if we have the neccessary flags or number of flags are right
 def inputValid():
 	if len(sys.argv) <= 1:
 		print("Ma you need a file name to run this code.\n")
@@ -60,6 +66,7 @@ def inputValid():
 		print("The second file needs to be an excel file that ends in .xlsx .\n")
 		return -1
 
+# writes to excel
 def writeToExcel(df, sheetNames, path, fileName, draw):
 
 	if draw:
@@ -95,7 +102,6 @@ def goThroughList(xls, sheetNames, draw):
 
 	for i in range(len(df[bank])):
 		if (df[bank].iloc[i]["Date"] != prev_date):
-			# print(df[bank].iloc[i]["Date"])
 			searchList = grabList(df[bank].iloc[i]["Date"], df[QB])
 
 		if ( df[bank].iloc[i]["Payment"] != None ):
@@ -107,21 +113,16 @@ def goThroughList(xls, sheetNames, draw):
 			if (number != -1):
 				df[QB].iloc[number,df[QB].columns.get_loc("Match")] = "Match"
 				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
-			# else:
-			# 	print("Not Found Payment: ", i ,df[bank].iloc[i]["Payment"])
 
 		if (df[bank].iloc[i]["Deposit"] != None):
 			if not draw:
 				number = searchDeposit(searchList, df[bank].iloc[i]["Deposit"], df[QB])
 			else:
 				number = searchDepositWithDescription(searchList, df[bank].iloc[i]["Deposit"], df[bank].iloc[i]["Description"], df[QB])
-				
+
 			if (number != -1):
 				df[QB].iloc[number, df[QB].columns.get_loc("Match")] = "Match"
 				df[bank].iloc[i, df[bank].columns.get_loc("Match")] = "Match"
-			# else:
-			# 		print("Not Found Deposit: ", i ,df[bank].iloc[i]["Deposit"])
-
 
 	print("Done Now Writing Back to The File")
 
