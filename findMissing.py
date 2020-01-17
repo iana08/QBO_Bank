@@ -101,11 +101,10 @@ def goThroughList(xls, sheetNames, draw):
 	searchList = grabList(df[bank].iloc[0]["Date"], df[QB])
 
 	for i in range(len(df[bank])):
-		if (df[bank].iloc[i]["Date"] != prev_date):
-			searchList = grabList(df[bank].iloc[i]["Date"], df[QB])
+		searchList = grabList(df[bank].iloc[i]["Date"], df[QB])
 
 		if ( df[bank].iloc[i]["Payment"] != None ):
-			if not draw:	
+			if not draw:
 				number = searchAmount(searchList, df[bank].iloc[i]["Payment"], df[QB])
 			else:
 				number = searchAmountWithDescription(searchList, df[bank].iloc[i]["Payment"], df[bank].iloc[i]["Description"], df[QB])
@@ -183,29 +182,33 @@ def grabList(date, monthArray):
 		day = int(date.day)
 		month = int(date.month)
 
+
+		# For when we have more than 1 month on the worksheet
 	lDay = day - 4
-	lMonth = month
-	if (lDay <= 0):
-		if (month == 3):
-			lDay = lDay + 28
-		elif(month == 1 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12):
-			lDay = 30 + (day - 2)
-		elif(month == 2 or month == 4 or month == 6 or month == 9 or month == 11):
-			lDay = 31 + (day - 2)
-		lMonth = month - 1
+	# lMonth = month
+	if (lDay < 1):
+		lDay = 1
+	# 	if (month == 3):
+	# 		lDay = lDay + 28
+	# 	elif(month == 1 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12):
+	# 		lDay = 30 + (day - 2)
+	# 	elif(month == 2 or month == 4 or month == 6 or month == 9 or month == 11):
+	# 		lDay = 31 + (day - 2)
+	# 	lMonth = month - 1
 
 	uDay = day + 4
-	uMonth = month
+	# uMonth = month
 	if(uDay > 28 and month == 2):
-		uDay = uDay - 28
-		uMonth = 1 + month
+		uDay =  28
+	# 	uDay = uDay - 28
+	# 	uMonth = 1 + month
 
 	if(uDay >= 31):
 		if(month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12):
-			uDay = uDay - 31
+			uDay = 31
 		elif(month == 4 or month == 6 or month == 9 or month == 11):
-			uDay = uDay - 30
-		uMonth = 1 + month
+			uDay = 30
+	# 	uMonth = 1 + month
 
 
 	secondDate = ""
@@ -217,8 +220,9 @@ def grabList(date, monthArray):
 		elif ('-' in str(secondDate)):
 			secondDay = int(secondDate.day)
 			secondMonth = int(secondDate.month)
-
-		if ( ( ( ( secondDay > uDay) and ( secondMonth < uMonth) ) or ( (secondDay <= uDay) and (secondMonth <= uMonth) ) ) and ( ((secondDay >= lDay) and (secondMonth >= lMonth )) or ((lDay > secondDay) and (secondMonth > lMonth)) ) ) :
+# ( ( ( ( secondDay > uDay) and ( secondMonth < uMonth) ) or ( (secondDay <= uDay) and (secondMonth <= uMonth) ) ) and ( ((secondDay >= lDay) and (secondMonth >= lMonth )) or ((lDay > secondDay) and (secondMonth > lMonth)) ) ) 
+		# ((lMonth == secondMonth) and lDay <= secondDay) or ( (uMonth == secondMonth) and (uDay >= secondDay) ) or ( (secondMonth == month) and ( (lDay <= secondDay) and (secondDay <= uDay) ) ) 
+		if ( (lDay <= secondDay) and (uDay >= secondDay) ):
 			if monthArray.iloc[i]["Match"] != "Match":
 				array.append(i)
 
